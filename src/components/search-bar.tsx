@@ -10,7 +10,7 @@ export default function SearchBar({ onSearch }: { onSearch: (query: string) => v
   
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | null>(null);
 
   // Detect mobile device
   useEffect(() => {

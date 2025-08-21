@@ -1,13 +1,16 @@
-// app/api/posts/[id]/like/route.ts
+// src/app/api/posts/[id]/like/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "../../../../../lib/db";
 
+// Define interfaces for TypeScript
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
 
-
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, context: RouteContext) {
   try {
-    // Await params before accessing properties
-    const { id } = await params;
+    // Await params to get the actual values
+    const { id } = await context.params;
     console.log('POST like request for post:', id);
 
     const supabase = await createServerClient();
@@ -107,10 +110,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
-    // Await params before accessing properties
-    const { id } = await params;
+    // Await params to get the actual values
+    const { id } = await context.params;
     console.log('DELETE like request for post:', id);
 
     const supabase = await createServerClient();

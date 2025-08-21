@@ -2,9 +2,36 @@
 import { createServerClient } from "../../../../lib/db";
 import { NextResponse, NextRequest } from "next/server";
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+// Define interfaces for TypeScript
+interface Profile {
+  id: string;
+  username: string;
+}
+
+interface Post {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  like_count: number;
+  is_liked: boolean;
+  profile: Profile | null;
+}
+
+interface PostUpdateData {
+  content: string;
+  updated_at: string;
+  title?: string; // Optional field
+}
+
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
+
+export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const supabase = await createServerClient();
     
     // Get the current user
@@ -44,7 +71,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .update({ 
         content,
         updated_at: new Date().toISOString()
-      })
+      } as PostUpdateData) // Type assertion for update data
       .eq('id', id)
       .select(`
         id,
@@ -85,10 +112,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       user_id: data[0].author_id,
       like_count: likesData?.length || 0,
       is_liked: !!userLike,
-      profile: data[0].profiles ? {
-        id: data[0].profiles.id,
-        username: data[0].profiles.username
-      } : null
+      profile: data[0].profiles && Array.isArray(data[0].profiles) && data[0].profiles.length > 0
+        ? {
+            id: data[0].profiles[0].id,
+            username: data[0].profiles[0].username
+          }
+        : data[0].profiles && !Array.isArray(data[0].profiles)
+        ? {
+            id: (data[0].profiles as Profile).id,
+            username: (data[0].profiles as Profile).username
+          }
+        : null
     } : null;
 
     return NextResponse.json(transformedPost);
@@ -99,9 +133,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = await params;
+    const { id } = await context.params;
     const supabase = await createServerClient();
     
     // Get the current user

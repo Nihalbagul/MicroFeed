@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import PostCard from './post-card';
 
 interface Post {
@@ -52,7 +52,8 @@ export default function PostsList({ filter = "all", query = "" }: PostsListProps
     }
   };
 
-  const fetchPosts = async () => {
+
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -91,7 +92,7 @@ export default function PostsList({ filter = "all", query = "" }: PostsListProps
       }
 
       // Ensure posts have default values
-      const postsWithDefaults = postsArray.map((post: any) => ({
+      const postsWithDefaults = postsArray.map((post: Post) => ({
         ...post,
         like_count: post.like_count ?? 0,
         is_liked: post.is_liked ?? false,
@@ -102,13 +103,13 @@ export default function PostsList({ filter = "all", query = "" }: PostsListProps
       
       // Filter by user if "mine" is selected
       if (filter === 'mine' && currentUser) {
-        filteredPosts = filteredPosts.filter(post => post.user_id === currentUser.id);
+        filteredPosts = filteredPosts.filter((post: { user_id: string; }) => post.user_id === currentUser.id);
       }
       
       // Filter by search query
       if (query) {
         const searchLower = query.toLowerCase();
-        filteredPosts = filteredPosts.filter(post => {
+        filteredPosts = filteredPosts.filter((post: { title: string; content: string; }) => {
           const titleMatch = post.title?.toLowerCase().includes(searchLower);
           const contentMatch = post.content?.toLowerCase().includes(searchLower);
           return titleMatch || contentMatch;
@@ -116,12 +117,12 @@ export default function PostsList({ filter = "all", query = "" }: PostsListProps
       }
 
       setPosts(filteredPosts);
-    } catch (error) {
+    } catch {
       setError('Failed to load posts');
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, query, currentUser]);
 
   useEffect(() => {
     const initializeData = async () => {
@@ -130,13 +131,11 @@ export default function PostsList({ filter = "all", query = "" }: PostsListProps
     
     initializeData();
   }, []);
-
-  // Refetch posts when filter, query, or currentUser changes
   useEffect(() => {
     if (currentUser !== undefined) {
       fetchPosts();
     }
-  }, [filter, query, currentUser]);
+  }, [filter, query, currentUser, fetchPosts]);
 
   const handlePostUpdate = (updatedPost: Post) => {
     setPosts(posts.map(post => 
@@ -177,7 +176,7 @@ export default function PostsList({ filter = "all", query = "" }: PostsListProps
         <div className="text-center text-gray-400 py-8">
           <p>No posts found</p>
           {query && <p className="text-sm mt-2">Try adjusting your search or create a new post.</p>}
-          {filter === 'mine' && <p className="text-sm mt-2">You haven't created any posts yet.</p>}
+          {filter === 'mine' && <p className="text-sm mt-2">You haven&#39;t created any posts yet.</p>}
         </div>
       ) : (
         <div className="space-y-4">

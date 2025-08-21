@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Composer from "../components/composer";
 import SearchBar from "../components/search-bar";
@@ -8,7 +8,8 @@ import usePosts from "../hooks/use-posts";
 import PostCard from "../components/post-card";
 import PostsList from "../components/PostsList";
 
-export default function Home() {
+// Separate component for the content that uses useSearchParams
+function HomeContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
   const message = searchParams.get("message");
@@ -20,7 +21,7 @@ export default function Home() {
   const postsArray = Array.isArray(posts) ? posts : [];
 
   return (
-    <main>
+    <>
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {decodeURIComponent(error)}
@@ -47,7 +48,7 @@ export default function Home() {
       
       {hasNextPage && (
         <div className="text-center mt-8">
-          <button 
+          <button
             onClick={fetchNextPage}
             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded transition-colors"
           >
@@ -55,6 +56,28 @@ export default function Home() {
           </button>
         </div>
       )}
+    </>
+  );
+}
+
+// Loading fallback component
+function HomeLoading() {
+  return (
+    <main>
+      <div className="flex justify-center py-8">
+        <p>Loading page...</p>
+      </div>
+    </main>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function Home() {
+  return (
+    <main>
+      <Suspense fallback={<HomeLoading />}>
+        <HomeContent />
+      </Suspense>
     </main>
   );
 }

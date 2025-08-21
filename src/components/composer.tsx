@@ -13,7 +13,7 @@ export default function Composer() {
   
   const cardRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | null>(null);
 
   // Detect mobile device
   useEffect(() => {

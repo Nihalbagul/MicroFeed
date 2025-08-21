@@ -44,8 +44,8 @@ export default function PostCard({
   const [isMobile, setIsMobile] = useState(false);
   
   const cardRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number>();
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const animationRef = useRef<number | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Detect mobile device
   useEffect(() => {
@@ -334,7 +334,7 @@ export default function PostCard({
         WebkitBackfaceVisibility: 'hidden',
         backfaceVisibility: 'hidden'
       })
-    }
+    } as React.CSSProperties
   };
 
   if (isEditing) {

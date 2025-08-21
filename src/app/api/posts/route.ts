@@ -2,6 +2,31 @@
 import { createServerClient } from "../../../lib/db";
 import { NextResponse, NextRequest } from "next/server";
 
+// Define interfaces for TypeScript
+interface Profile {
+  id: string;
+  username: string;
+}
+
+interface Post {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  like_count: number;
+  is_liked: boolean;
+  profile: Profile | null;
+}
+
+// Define the type for insert data
+interface PostInsertData {
+  content: string;
+  author_id: string;
+  created_at: string;
+  title?: string; // Optional field
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createServerClient();
@@ -44,7 +69,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!posts || posts.length === 0) {
-      return NextResponse.json({ posts: [], user });
+      return NextResponse.json({ posts: [] as Post[], user });
     }
 
     // Get all likes for these posts in one query
@@ -70,21 +95,32 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform the data to match your PostCard component expectations
-    const transformedPosts = posts.map(post => ({
-      id: post.id,
-      title: post.title,
-      content: post.content,
-      created_at: post.created_at,
-      user_id: post.author_id,
-      like_count: likesMap.get(post.id) || 0,
-      is_liked: userLikesSet.has(post.id),
-      profile: post.profiles ? {
-        id: post.profiles.id,
-        username: post.profiles.username
-      } : null
-    }));
+    const transformedPosts = posts.map(post => {
+      let profileData: Profile | null = null;
+      if (post.profiles && Array.isArray(post.profiles) && post.profiles.length > 0) {
+        profileData = {
+          id: post.profiles[0].id,
+          username: post.profiles[0].username
+        };
+      } else if (post.profiles && !Array.isArray(post.profiles)) {
+        profileData = {
+          id: (post.profiles as Profile).id,
+          username: (post.profiles as Profile).username
+        };
+      }
+      return {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        created_at: post.created_at,
+        user_id: post.author_id,
+        like_count: likesMap.get(post.id) || 0,
+        is_liked: userLikesSet.has(post.id),
+        profile: profileData
+      };
+    });
 
-    return NextResponse.json({ posts: transformedPosts, user });
+    return NextResponse.json({ posts: transformedPosts as Post[], user });
   } catch (error) {
     console.error('Posts API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -117,8 +153,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Content is required' }, { status: 400 });
     }
 
-    // Prepare insert data
-    const insertData: any = {
+    // Prepare insert data with proper typing
+    const insertData: PostInsertData = {
       content,
       author_id: user.id,
       created_at: new Date().toISOString(),
@@ -170,12 +206,19 @@ export async function POST(request: NextRequest) {
       content: data[0].content,
       created_at: data[0].created_at,
       user_id: data[0].author_id,
-      like_count: 0, // New posts start with 0 likes
-      is_liked: false, // User can't have liked a new post yet
-      profile: data[0].profiles ? {
-        id: data[0].profiles.id,
-        username: data[0].profiles.username
-      } : null
+      like_count: 0,
+      is_liked: false,
+      profile: data[0].profiles && Array.isArray(data[0].profiles) && data[0].profiles.length > 0
+        ? {
+            id: data[0].profiles[0].id,
+            username: data[0].profiles[0].username
+          }
+        : data[0].profiles && !Array.isArray(data[0].profiles)
+        ? {
+            id: (data[0].profiles as Profile).id,
+            username: (data[0].profiles as Profile).username
+          }
+        : null
     } : null;
 
     return NextResponse.json({

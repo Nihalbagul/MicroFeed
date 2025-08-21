@@ -14,7 +14,7 @@ export default function Toolbar({
   const [isMobile, setIsMobile] = useState(false);
   
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | null>(null);
 
   // Detect mobile device
   useEffect(() => {

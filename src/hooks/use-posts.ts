@@ -1,5 +1,5 @@
 // hooks/use-posts.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface Post {
   id: string;
@@ -33,7 +33,9 @@ export default function usePosts({ query, filter }: UsePostsParams): UsePostsRet
   const [error, setError] = useState<string | null>(null);
   const [hasNextPage] = useState(false); // For now, no pagination
 
-  const fetchPosts = async () => {
+  // removed misplaced import
+
+  const fetchPosts = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -65,11 +67,11 @@ export default function usePosts({ query, filter }: UsePostsParams): UsePostsRet
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [query, filter]);
 
   useEffect(() => {
     fetchPosts();
-  }, [query, filter]);
+  }, [fetchPosts]);
 
   const fetchNextPage = () => {
     // Placeholder for pagination
